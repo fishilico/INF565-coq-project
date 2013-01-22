@@ -1,0 +1,436 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1">
+    <title>INF565&nbsp;: Vérification</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+  </head>
+  <body>
+    <h1>
+      <center>
+        Preuve d'un micro-compilateur pour le lambda-calcul non typé
+      </center>
+    </h1>
+    <i>(sujet réalisé par Xavier Rival (INRIA/ENS), à partir d'un projet
+      proposé par Benjamin Werner)</i>
+    
+    <p>
+      L'objectif de ce projet consiste à formaliser et à prouver en Coq
+      un micro-compilateur pour le lambda-calcul vers une machine à pile.
+      L'ensemble du code et des preuves seront rédigées en Coq.
+      Au cours de ce projet, nous aborderons tout d'abord la formalisation
+      du langage source à l'aide d'indices de De Bruijn ainsi que sa
+      sémantique, puis nous formaliserons le compilateur et enfin nous
+      en prouverons la correction.
+    </p>
+    <p>
+      <b>Note&nbsp;:</b>
+      les notions nécessaires qui ne sont pas présentées
+      sur cette page le seront au tableau, au cours du projet.
+    </p>
+    
+    
+    <h3> 1. Indices de De Bruijn et manipulation de &lambda;-termes. </h3>
+    <p>
+      Le &lambda;-calcul est un modèle minimal des langages fonctionnels
+      qui se prête très bien à l'étude de leur compilation.
+      Il est défini par la grammaire ci-dessous&nbsp;:
+    </p>
+    <!-- Todo: put in a box; check why size is bigger -->
+    <center>
+      <table align="center">
+        <tr>
+          <td> t </td> <td align="center" > ::= </td> <td> x&nbsp; </td>
+          <td alighn="left"> variable</td>
+        </tr>
+        <tr>
+          <td></td> <td align="center" >|</td>
+          <td align="left">&lambda; x.t &nbsp; &nbsp;</td>
+          <td align="left">fonction associant t à x</td>
+        </tr>
+        <tr>
+          <td></td> <td align="center">|</td>
+          <td align="left">t u</td>
+          <td align="left">application de la fonction t à u</td>
+        </tr>
+      </table>
+    </center>
+    <p>
+      Ce langage permet donc de définir des fonctions et de les appliquer à
+      des arguments.
+      La sémantique de ce langage est définie par la notion de &beta;-réduction
+      qui consiste à évaluer l'application d'une fonction à son argument en
+      effectuant une substitution de terme&nbsp;:
+    </p>
+    <center>
+      (&lambda; x.t) u &nbsp; &#8594; &nbsp; t[x &#8592; u]
+    </center>
+    <p>
+      Lorsque l'on veut formaliser un langage réel comme Caml, on ajoute de
+      nouvelles constructions (références, conditions, modules...), ainsi que
+      des types, mais le principe reste le même.
+      <br>
+      La présentation classique du &lambda;-calcul fait appel à des variables
+      dont les noms sont des chaînes de caractères.
+      On notera ainsi &lambda;x.x la fonction identité.
+      L'inconvénient de cette notation vient d'une part du fait que l'on
+      peut substituer tout autre nom à une variable liée sans changer le
+      sens du terme (&alpha;-équivalence) et d'autre part du fait qu'il
+      faille faire attention à renommer les variables de mêmes noms mais
+      correspondant à des lieurs différents lors d'une substitution de
+      terme.
+    </p>
+    <p>
+      Une solution alternative, plus proche d'une représentation en machine,
+      fait appel à des entiers positifs, qui représentent le nombre de lieurs
+      &lambda; séparant l'occurence d'une variable de l'abstraction à laquelle
+      elle est liée.
+      Les noms de variables sous les &lambda; deviennent alors inutiles
+      (il s'agit toujours de la variable 0 en ce point).
+      Ainsi, &lambda;x.&lambda;y.y x sera représentée par le terme
+      &lambda;.&lambda.(0 1).
+      La notation d'un terme clos (c'est à dire dont toutes les variables
+      sont liées à un &lambda;) avec de tels indices, appelés indices de De
+      Bruijn est unique.
+    </p>
+    
+    <h4> Travail demandé&nbsp;: </h4>
+    <ol>
+      <li> Définir les termes avec indices de De Bruijn en Coq. </li>
+      <li> Définir la notion de terme clos sous la forme d'un prédicat
+        (astuce&nbsp;: il faut définir la notion plus générale de terme
+        dont toutes les variables libres sont d'indice inférieur à n puis
+        démontrer que si ce prédicat est vrai pour n il l'est aussi pour
+        n+1&nbsp;; on notera C[n](t) si t satisfait ce prédicat)</li>
+      <li> Définir une fonction de substitution sur les indices de De Bruijn
+        (bien réflechir sur papier avant, car cette définition est difficile)
+        et prouver que la substitution d'un terme dans un terme clos retourne
+        ce dernier. </li>
+      <li> Définir une fonction de substitution plus générale prenant une liste
+        de termes et effectuant plusieurs substitutions en parallèle&nbsp;;
+        pour cela définir
+        <center> 
+          t[i &#8592;  u<sub>0</sub>, i+1 &#8592; u<sub>1</sub>,...,
+          i+n-1 &#8592; u<sub>n</sub>] &nbsp; (que l'on
+          abrégera par t[i &#8592; u<sub>0</sub>...u<sub>n</sub>])
+        </center>
+        Prouver, pour tout &lambda;-termes t, u<sub>0</sub>,...,
+        u<sub>n</sub> et tout entier i&nbsp;:
+        <ul>
+          <li> t[] = t </li>
+          <li> si C[i](t), alors t[i &#8592; u] = t </li>
+          <li> si &#8704; k &#8805; 1, C[i](u<sub>k</sub>), alors
+            t[i &#8592; u<sub>0</sub>...u<sub>n</sub>] =
+            t[1+i &#8592; u<sub>1</sub>...u<sub>n</sub>][i &#8592;
+            u<sub>0</sub>] </li>
+        </ul>
+      </li>
+    </ol>
+    
+    
+    <h3> 2. Sémantique des &lambda;-termes. </h3>
+    <p>
+      On peut à présent définir une sémantique à petit pas pour notre
+      langage source.
+      Cette sémantique décrit tout simplement la &beta;-réduction, où
+      l'argument d'une fonction est substitué au paramètre de celle-ci.
+      Nous considérons ici cette relation comme étant non déterministe,
+      c'est-à-dire que nous ne fixons pas d'ordre particulier à l'évaluation
+      des &beta;-réductions possibles, lorsqu'il y en a plusieurs (dans un
+      langage réel, une stratégie précise est généralement choisie, comme
+      par exemple l'appel par valeur, où l'on évalue toujours l'argument
+      avant d'évaluer un appel de fonction&nbsp; l'une des extensions aborde
+      ce problème).
+    </p>
+    <p>
+      La relation "t se réduit en u en une étape de &beta;-réduction"
+      notée t &#8594; u peut être définie par les règles suivantes&nbsp;:
+    </p>
+    <ul>
+      <li> <b>étape de calcul</b>&nbsp;:
+        (&lambda;.t) u &#8594; t[0 &#8592; u] </li> 
+      <li> <b>clôture par contexte</b> (i.e., réduction d'un sous terme)&nbsp;:
+        <ul>
+          <li> si t &#8594; u, alors t v &#8594; u v </li>
+          <li> si t &#8594; u, alors v t &#8594; v u </li>
+          <li> si t &#8594; u, alors &lambda;.t &#8594; &lambda;.u </li>
+        </ul>
+      </li>
+    </ul>
+    <p>
+      La relation &#8594;<sup>*</sup> est alors définie par&nbsp;:
+    </p>
+    <ul>
+      <li> t &#8594;<sup>*</sup> t</li>
+      <li> si t &#8594; u et
+        <i>u</i> &#8594;<sup>*</sup> v, alors t &#8594;<sup>*</sup> v </li>
+    </ul>
+    
+    <h4> Travail demandé&nbsp;: </h4>
+    <ol>
+      <li> Formaliser la relation "t se réduit en u en une étape de
+        &beta;-réduction" (&#8594;) (on utilisera un prédicat inductif). </li>
+      <li> Formaliser la relation "t se réduit en u en un nombre quelconque
+        d'étapes de réduction" (&#8594;<sup>*</sup>). </li>
+      <li> Prouver que &#8594;<sup>*</sup> satisfait les mêmes propriétés
+        de clôture par contexte que &#8594;. </li>
+    </ol>
+    
+    
+    <h3> 3. La machine abstraite de Krivine (Krivine Abstract Machine). </h3>
+    <p>
+      Nous allons à présent nous intéresser au langage cible.
+      Celui-ci consiste en trois instructions, et peut être décrit par
+      la grammaire ci-dessous&nbsp;:
+    </p>
+    <center>
+      <table align="center">
+        <tr>
+          <td> i </td>
+          <td> ::= </td>
+          <td> &nbsp; </td>
+          <td align="left"> instruction </td>
+        </tr>
+        <tr>
+          <td> </td>
+          <td> | </td>
+          <td> <b>Access</b> n &nbsp; &nbsp; &nbsp; &nbsp; </td>
+          <td align="left"> où n est un entier </td>
+        </tr>
+        <tr>
+          <td> </td>
+          <td> | </td>
+          <td> <b>Grab</b> &nbsp; &nbsp; &nbsp; &nbsp; </td>
+          <td align="left"> </td>
+        </tr>
+        <tr>
+          <td> </td>
+          <td> | </td>
+          <td> <b>Push</b> c &nbsp; &nbsp; &nbsp; &nbsp; </td>
+          <td align="left"> </td>
+        </tr>
+        <tr>
+          <td> c </td>
+          <td> ::= </td>
+          <td> &nbsp; </td>
+          <td align="left"> bloc de code </td>
+        </tr>
+        <tr>
+          <td> </td>
+          <td> | </td>
+          <td> i<sub>0</sub>;...;i<sub>n</sub> </td>
+          <td align="left"> </td>
+        </tr>
+      </table>
+    </center>
+    <p>
+      La machine de Krivine utilise deux piles&nbsp;:
+    </p>
+    <ul>
+      <li> l'environnement qui conserve les termes correspondants aux
+        variables libres du terme en cours d'évaluation&nbsp;; </li>
+      <li> la pile (stack) qui conserve les termes correspondants aux
+        arguments des appels de fonctions en cours d'évaluation. </li>
+    </ul>
+    <p>
+      La pile consiste en une liste de paires constituée d'un fragment
+      de code à exécuter et d'un environnement (la structure est donc
+      récursive).
+      Un état de cette machine correspond alors à un triplet de la forme
+    </p>
+    <center> {c | e | s} </center>
+    <p>
+      où c est un bloc de code, e un environnement et s une pile.
+    </p>
+    <p>
+      La sémantique de la machine de Krivine est décrite par les règles
+      ci-dessous&nbsp;:
+    </p>
+    <!-- TODO: il y a des problèmes d'alignement -->
+    <center>
+      <table align="center">
+        <tr>
+          <td align="right">
+            {<b>Access</b> 0;... | (c<sub>0</sub>,e<sub>0</sub>).e | s}
+          </td>
+          <td> &#8594; </td>
+          <td align="left"> {c<sub>0</sub> | e<sub>0</sub> | s}</td>
+        </tr>
+        <tr>
+          <td align="right">
+            {<b>Access</b> n; c | (c<sub>0</sub>,e<sub>0</sub>).e | s}
+          </td>
+          <td> &#8594; </td>
+          <td align="left">
+            {<b>Access</b> (<i>n</i>-1); c | e | s} &nbsp; &nbsp; si n &gt; 0
+          </td>
+        </tr>
+        <tr>
+          <td align="right"> {<b>Push</b> c'; c | e | s} </td>
+          <td> &#8594; </td>
+          <td align="left"> {c | e | (c',e).s} </td>
+        </tr>
+        <tr>
+          <td align="right">
+            {<b>Grab</b>; c | e | (c<sub>0</sub>,e<sub>0</sub>).s }
+          </td>
+          <td> &#8594; </td>
+          <td align="left"> {c | (c<sub>0</sub>,e<sub>0</sub>).e | s} </td>
+        </tr>
+      </table>
+    </center>
+    
+    <h4> Travail demandé&nbsp;: </h4>
+    <ol>
+      <li> Observer le fonctionnement de la machine abstraite "sur papier"
+        ou à l'aide d'une mini-implémentation en Caml (utile pour se fixer
+        les idées sur son comportement). </li>
+      <li> Formaliser les états de la machine abstraite de Krivine. </li>
+      <li> Formaliser sa sémantique (on pourra écrire une fonction prenant
+        un état et renvoyant un type option, le terme "None" permettant de
+        traiter les états pour lesquels il n'existe pas de transition. </li>
+    </ol>
+    
+    
+    <h2> 4. Compilation. </h2>
+    <p>
+      La fonction de compilation Comp est très simple&nbsp;:
+    </p>
+    <center>
+      <table align="center">
+        <tr>
+          <td align="right"> Comp(&lambda;.t) </td>
+          <td> = </td>
+          <td align="left"> <b>Grab</b>; Comp(t) </td>
+        </tr>
+        <tr>
+          <td align="right"> Comp(t u) </td>
+          <td> = </td>
+          <td align="left"> <b>Push</b> (Comp(u)); Comp(t) </td>
+        </tr>
+        <tr>
+          <td align="right"> n </td>
+          <td> = </td>
+          <td align="left"> <b>Access</b> n </td>
+        </tr>
+      </table>
+    </center>
+    
+    <h4> Travail demandé&nbsp;: </h4>
+    <ol>
+      <li> Définir la fonction de compilation en Coq. </li>
+    </ol>
+    
+    
+    <h2> 5. Correction de la compilation. </h2>
+    <p>
+      Pour établir la correction du compilateur, on va définir une traduction
+      "à l'envers" &tau; qui permet d'associer à chaque état de la machine un
+      programme "équivalent"&nbsp;:
+    </p>
+    <center>
+      <table>
+        <tr>
+          <td align="right"> &tau;(<b>Access</b> n; c) </td>
+          <td> = </td>
+          <td> n </td>
+        </tr>
+        <tr>
+          <td align="right"> &tau;(<b>Push</b> c'; c) </td>
+          <td> = </td>
+          <td> &tau;(c) &tau;(c')</td>
+        </tr>
+        <tr>
+          <td align="right"> &tau;(<b>Grab</b>; c) </td>
+          <td> = </td>
+          <td> &lambda;.&tau;(c) </td>
+        </tr>
+        <tr>
+          <td align="right"> &tau;() </td>
+          <td> = </td>
+          <td> [] </td>
+        </tr>
+        <tr>
+          <td align="right"> &tau;((c<sub>0</sub>,e<sub>0</sub>).e) </td>
+          <td> = </td>
+          <td> [0 &#8592; &tau;(c<sub>0</sub>)[0 &#8592; &tau;(e<sub>0</sub>)],
+            u<sub>1</sub>...u<sub>n</sub>] &nbsp; &nbsp; &nbsp; &nbsp;
+            où &tau;(e) = [0 &#8592; u<sub>1</sub>...u<sub>n></sub>]
+          </td>
+        </tr>
+        <tr>
+          <td align="right">
+            &tau;({c | e |
+            (c<sub>0</sub>,e<sub>0</sub>).(c<sub>1</sub>,e<sub>1</sub>). ...
+            .(c<sub>n</sub>,s<sub>n</sub>)})
+          </td>
+          <td> = </td>
+          <td>
+            ((&tau;(c)[&tau;(e)]) (&tau;(c<sub>0</sub>)[&tau;(e<sub>0</sub>)])
+            ... (&tau;(c<sub>n</sub>)[&tau;(e<sub>n</sub>)])
+          </td>
+        </tr>
+      </table>
+    </center>
+    <p>
+      Une propriété importante de la machine de Krivine est qu'elle préserve
+      au cours des calculs la clôture des termes, modulo cette traduction
+      (autrement dit, elle ne perd pas le lien vers un sous-terme lorsque
+      celui ci est placé sur la pile ou dans l'environnement).
+      Pour cela, il faut définir ce qu'est une configuration "correcte".
+      Une pile (c<sub>0</sub>,e<sub>0</sub>).e est dite correcte si et
+      seulement si e<sub>0</sub> et e sont correctes et &tau;(c<sub>0</sub>)
+      vérifie le prédicat de clôture C[n] où n est la longueur de
+      e<sub>0</sub>.
+      Un état {c | e | s} est dit correct si et seulement si e est correct,
+      &tau;(c) vérifie le prédicat de clôture C[n] où n est la longueur de
+      e et pour toute paire (c<sub>k</sub>, e<sub>k</sub>) dans la pile s,
+      e<sub>k</sub> est correct et c<sub>k</sub> vérifie le prédicat de
+      clôture C[n<sub>k</sub>] où n<sub>k</sub> est la longueur de
+      e<sub>k</sub>.
+      Cette propriété est fondamentale pour établir la correction de la
+      compilation.
+    </p>
+    
+    <h4> Travail demandé&nbsp;: </h4>
+    <ol>
+      <li> Définir &tau;.
+      <li> Démontrer que lorsque l'on compile un terme puis qu'on applique
+        la fonction &tau;, on retrouve le terme initial. </li>
+      <li> Démontrer que toute transition à partir d'un état correct conduit
+        à un autre état correct (du point de vue de la clôture des termes
+        dans l'environnement). </li>
+      <li> Démontrer que toute transition à partir d'un état correct
+        correspond à &#8594; modulo &tau;. </li>
+      <li> En déduire un théorême de correction de la compilation. </li>
+    </ol>
+    
+    
+    <h2> 6. Extensions. </h2>
+    <p>
+      Nous vous proposons ici plusieurs extensions du langage source ainsi
+      que de la machine abstraite permettant d'explorer plusieurs aspects de
+      la compilation.
+      Vous pouvez choisir d'en réaliser une ou plusieurs, ou bien en proposer
+      d'autres...
+    </p>
+    <ul>
+      <li> <b>(*) ajout de constantes et d'opérateurs&nbsp;:</b>
+        ajouter des constantes (valeurs entières, booléennes...), étendre la
+        machine abstraite et le compilateur et prouver un nouveau théorême
+        de correction. </li>
+      <li> <b>(**) forcer une stratégie d'évaluation par appel par
+          valeur&nbsp;:</b> </li>
+      <li> <b>(**) un langage avec types&nbsp;:</B>
+        après avoir ajouter quelques constantes et opérateurs, ajouter
+        une notion de terme bien typé au langage initial, puis essayer
+        de prouver quelques lemmes intéressants sur la sémantique du
+        language source, comme en particulier le fait qu'un programme
+        bien typé ne sera jamais bloqué dans une configuration non
+        voulue. </li>
+      <li> <b>(***) compiler, avec des types&nbsp;:</B>
+        ayant ajouté des types au langage source, essayer d'ajouter une
+        notion de type à la machine cible et prouver qu'un programme bien
+        typé sera aussi bien compilé. </li>
+    </ul>
+  </body>
+</html>
