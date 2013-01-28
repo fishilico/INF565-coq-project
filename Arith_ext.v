@@ -1,18 +1,20 @@
-(* Some useful arithmetical theorems on nat *)
+(* Some useful arithmetical theorems on nat missing in Arith library *)
 Require Export Arith.
-Load Logic_ext.
 
-(* Useful theorems missing in Arith library *)
 Theorem lt_neq:
-  forall n m: nat, n < m \/ m < n -> n <> m.
+  forall n m: nat, n < m -> n <> m.
 Proof.
-  intros n m H. contradict H. rewrite H. rewrite or_dup. apply lt_irrefl.
+  intros n m H. contradict H. rewrite H. apply lt_irrefl.
 Save.
 
-Theorem lt_neq_iff:
-  forall n m: nat, n < m \/ m < n <-> n <> m.
+Theorem lt_neq_sym:
+  forall n m: nat, n < m -> m <> n.
 Proof.
-  intros n m. apply iff_to_and. apply conj.
-  intro H. apply lt_neq. apply H.
-  intro H. apply nat_total_order. apply H.
+  intros n m H. contradict H. rewrite H. apply lt_irrefl.
+Save.
+
+Theorem minus_plus_simpl:
+  forall n m p: nat, n - (m + p) = n - m - p.
+Proof.
+  induction n; induction m; induction p; simpl; trivial.
 Save.
