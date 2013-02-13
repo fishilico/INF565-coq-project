@@ -36,47 +36,36 @@ Theorem substitute_list_cons_free_eq:
   fr_below_list i ul ->
     subst_list t i (u :: ul) = subst_list (subst_list t (S i) ul) i (u :: nil).
 Proof.
-  induction t; simpl.
-    induction ul; simpl; intros i u H.
-      induction i; induction n; trivial.
-      destruct H.
-      cut (n = i \/ n <> i).
-        intro H1; destruct H1.
-          (* n = i *)
-          rewrite <- H1.
-          rewrite (substitute_vl_eq n u (a :: ul) (Var n)).
-          rewrite (substitute_vl_lt n (S n) (a :: ul) (Var n)); auto with arith.
-          simpl.
-          auto with substitute.
-          (* n <> i *)
-          rewrite (substitute_vl_ne n i u (a :: ul) (Var n)); trivial.
-          cut (subst_var_list n (S i) (a :: ul) (Var n) = Var n \/
-               In (subst_var_list n (S i) (a :: ul) (Var n)) (a :: ul)).
-            intro H2; destruct H2.
-              rewrite H2; simpl.
-              rewrite substitute_vl_ne; trivial.
-              rewrite substitute_vl_nil; trivial.
-
-              rewrite (substitute_singlelist_free_eq
-                       (subst_var_list n (S i) (a :: ul) (Var n)) i u); trivial.
-
-              cut (a = subst_var_list n (S i) (a :: ul) (Var n) \/
-                   In (subst_var_list n (S i) (a :: ul) (Var n)) ul).
-                intro H3; destruct H3.
-                  rewrite <- H3; trivial.
-                  apply (fr_below_list_forall i ul); trivial.
-                apply in_inv; trivial.
-
-            apply (substitute_vl_values n (S i) (a :: ul) (Var n)).
-        apply neq_or_eq.
+  induction t; simpl; intros ul i u H.
+    cut (n = i \/ n <> i).
+      intro H0; destruct H0.
+        (* n = i *)
+        rewrite <- H0.
+        rewrite (substitute_vl_eq n u ul (Var n)).
+        rewrite (substitute_vl_lt n (S n) ul (Var n)); auto with arith.
+        simpl.
+        auto with substitute.
+        (* n <> i *)
+        rewrite (substitute_vl_ne n i u ul (Var n)); trivial.
+        cut (subst_var_list n (S i) ul (Var n) = Var n \/
+             In (subst_var_list n (S i) ul (Var n)) ul).
+          intro H1; destruct H1.
+            (* subst_var_list n (S i) ul (Var n) = Var n *)
+            rewrite H1; simpl.
+            rewrite substitute_vl_ne; trivial.
+            rewrite substitute_vl_nil; trivial.
+            (* In (subst_var_list n (S i) ul (Var n)) ul *)
+            rewrite (substitute_singlelist_free_eq
+                     (subst_var_list n (S i) ul (Var n)) i u); trivial.
+            apply (fr_below_list_forall i ul); trivial.
+          apply (substitute_vl_values n (S i) ul (Var n)).
+      apply neq_or_eq.
 
     (* Lambda *)
-    intros ul i u H.
-      rewrite IHt; trivial.
-      apply fr_below_list_S; trivial.
+    rewrite IHt; trivial.
+    apply fr_below_list_S; trivial.
 
     (* Apply *)
-    intros ul i u H.
-      rewrite IHt1; trivial.
-      rewrite IHt2; trivial.
+    rewrite IHt1; trivial.
+    rewrite IHt2; trivial.
 Save.
