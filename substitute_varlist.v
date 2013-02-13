@@ -1,4 +1,4 @@
-Load substitution.
+Require Import Arith_ext List lterm substitution.
 
 (* Substitution of variable x in a list i->u0, i+1->u1, i+2->u2, ...
  * Return d by default

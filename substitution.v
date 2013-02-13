@@ -1,4 +1,4 @@
-Load free_variables.
+Require Import Arith_ext free_variables lterm.
 
 (*
  * Substitute x with u in t, ie. return t[x <- u]

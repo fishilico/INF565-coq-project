@@ -1,0 +1,9 @@
+*~
+*.backup
+*.bak
+*.css
+*.glob
+*.html
+!projet-coq.html
+.*.swp
+*.vo

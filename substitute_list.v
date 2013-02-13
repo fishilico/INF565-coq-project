@@ -1,4 +1,4 @@
-Load substitute_varlist.
+Require Import Arith_ext free_variables List lterm substitute_varlist.
 
 (* Substitution with a list of terms i->u0, i+1->u1, i+2->u2, ... *)
 Fixpoint subst_list (t: lterm) (i: nat) (u: list lterm) : lterm :=

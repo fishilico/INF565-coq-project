@@ -1,6 +1,4 @@
-Load lterm.
-Require Import List.
-Load Arith_ext.
+Require Import Arith_ext List lterm.
 
 (* Predicate: every free variable has an index below n *)
 Fixpoint fr_below (n: nat) (t: lterm) : Prop :=
