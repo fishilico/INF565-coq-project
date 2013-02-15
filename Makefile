@@ -2,17 +2,18 @@ COQC=coqc -batch
 SOURCES=$(wildcard *.v)
 OBJECTS=$(SOURCES:%.v=%.vo)
 GLOBS=$(SOURCES:%.v=%.glob)
-DOCFILES=$(SOURCES:%.v=%.html) coqdoc.css index.html
 
 .PHONY: all clean doc
 
 all: $(OBJECTS)
 
 clean:
-	rm -f $(OBJECTS) $(GLOBS) $(DOCFILES)
+	rm -f $(OBJECTS) $(GLOBS)
+	rm -rf doc
 
 doc: $(OBJECTS)
-	coqdoc $(SOURCES)
+	[ -d $@ ] || mkdir $@
+	coqdoc -d $@ $(SOURCES)
 
 %.vo: %.v
 	$(COQC) -batch $<
