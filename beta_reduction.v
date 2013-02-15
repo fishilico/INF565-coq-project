@@ -1,3 +1,5 @@
+(** 2. Lambda-term semantic and Beta reduction *)
+
 Require Import lterm substitution.
 
 (** 2.1. One step of Beta-reduction *)
