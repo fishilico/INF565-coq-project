@@ -16,7 +16,7 @@ doc: $(OBJECTS)
 	coqdoc -d $@ $(SOURCES)
 
 %.vo: %.v
-	$(COQC) -batch $<
+	$(COQC) $<
 	@rm -f $(GLOB_TMP_FILE)
 
 beta_reduction.vo: lterm.vo substitution.vo
