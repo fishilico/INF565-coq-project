@@ -22,7 +22,7 @@ Inductive krivine_state : Set :=
   | State: krivine_code -> krivine_env -> krivine_env -> krivine_state.
 
 (** 3.3. Semantic: execute one step *)
-Definition krivine_set (st: krivine_state) : option krivine_state :=
+Definition krivine_step (st: krivine_state) : option krivine_state :=
   match st with
     | State (Access O :: _) (Item c0 e0 :: _) s => Some (State c0 e0 s)
     | State (Access (S n) :: c) (Item _ _ :: e) s =>
