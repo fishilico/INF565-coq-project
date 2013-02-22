@@ -1,35 +1,38 @@
 (** 3. Krivine Abstract Machine *)
 Require Import List.
 
-(** 3.2. Krivine instruction *)
-Inductive krivine_instr : Set :=
-  | Access: nat -> krivine_instr
-  | Grab: krivine_instr
-  | Push: list krivine_instr -> krivine_instr
+(** 3.2. Krivine code
+Code is a list of Access, Grab and Push instructions. This definition merge
+instruction and "code = list instruction" definitions, to allow recursion
+on Push parameter.
+To do this, add "Nop" code, which is equivalent to the nil list.
+*)
+Inductive krivine_code : Set :=
+  | Nop: krivine_code
+  | Access: nat -> krivine_code -> krivine_code
+  | Grab: krivine_code -> krivine_code
+  | Push: krivine_code -> krivine_code -> krivine_code
 .
 
-Definition krivine_code := list krivine_instr.
-
-(** Environment stack *)
-Inductive krivine_env_item : Set :=
-  | Item: krivine_code -> list krivine_env_item -> krivine_env_item
+(** Environment stack : (c, e) list *)
+Inductive krivine_env : Set :=
+  | KEnv_nil: krivine_env
+  | KEnv: krivine_code -> krivine_env -> krivine_env -> krivine_env
 .
-
-Definition krivine_env := list krivine_env_item.
 
 (* State *)
 Inductive krivine_state : Set :=
-  | State: krivine_code -> krivine_env -> krivine_env -> krivine_state.
+  | KState: krivine_code -> krivine_env -> krivine_env -> krivine_state.
 
 (** 3.3. Semantic: execute one step *)
 Definition krivine_step (st: krivine_state) : option krivine_state :=
   match st with
-    | State (Access O :: _) (Item c0 e0 :: _) s => Some (State c0 e0 s)
-    | State (Access (S n) :: c) (Item _ _ :: e) s =>
-        Some (State (Access n :: c) e s)
-    | State (Push c0 :: c) e s => Some (State c e (Item c0 e :: s))
-    | State (Grab :: c) e (Item c0 e0 :: s) =>
-        Some (State c (Item c0 e0 :: e) s)
+    | KState (Access O _) (KEnv c0 e0 _) s => Some (KState c0 e0 s)
+    | KState (Access (S n) c) (KEnv _ _ e) s =>
+        Some (KState (Access n c) e s)
+    | KState (Push c0 c) e s => Some (KState c e (KEnv c0 e s))
+    | KState (Grab c) e (KEnv c0 e0 s) =>
+        Some (KState c (KEnv c0 e0 e) s)
     | _ => None
   end
 .
