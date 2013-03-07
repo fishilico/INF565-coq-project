@@ -36,34 +36,17 @@ Proof.
   apply not_closed_Nop.
 Save.
 
-(** A state with Access needs a long enough environment *)
-Lemma correct_Access:
-  forall (n: nat) (c: krivine_code) (e s: krivine_env),
-  correct_env (KEnv (Access n c) e s) -> n < klength e.
-Proof.
-  intros n c e s H.
-  apply (closed_Access (klength e) n c).
-  inversion H; trivial.
-Save.
-
-Lemma correct_Access_nonnil_env:
-  forall (n: nat) (c: krivine_code) (e s: krivine_env),
-  correct_env (KEnv (Access n c) e s) -> e <> KEnv_nil.
-Proof.
-  intros n c e s H.
-  apply klength_pos_is_not_nil.
-  cut (klength e > n). eauto with arith.
-  apply (correct_Access n c e s). trivial.
-Save.
-
+(** A state with Access is invalid with an empty environment *)
 Lemma incorrect_Access:
   forall (n: nat) (c: krivine_code) (s: krivine_env),
   ~ correct_env (KEnv (Access n c) KEnv_nil s).
 Proof.
   intros n c s H.
-  cut (KEnv_nil <> KEnv_nil).
-  apply absurd; trivial.
-  apply (correct_Access_nonnil_env n c KEnv_nil s); trivial.
+  inversion H. clear H0 H1 H2 c0 e0 e.
+  generalize H3; simpl; intro H0. clear H3.
+  cut (n < O).
+    intro H1; contradict H1; auto with arith.
+  apply (closed_Access O n c); trivial.
 Save.
 
 (** 5.3. *)
@@ -73,14 +56,13 @@ Proof.
   (* Use correct_env instead of correct_state in hypothesis *)
   induction st; trivial. clear IHst1 IHst2.
   intro H. inversion H. clear H H0.
-  induction k.
+  induction k; inversion H1; clear H H0 H2 c0 e0 e.
 
   (* correct_state (krivine_step (KEnv Nop st1 st2)) *)
   contradict H1.
   apply incorrect_Nop.
 
   (* correct_state (krivine_step (KEnv (Access n k) st1 st2)) *)
-  inversion H1. clear H H0 H2 c0 e0 e.
   induction st1.
     contradict H1. apply incorrect_Access.
   clear IHst1_1 IHst1_2.
