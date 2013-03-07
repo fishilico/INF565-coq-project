@@ -65,7 +65,7 @@ Definition closed_code (n: nat) (c: krivine_code): Prop :=
 .
 
 (** Here are some lemmas using closed_code *)
-Lemma not_closed_Nop:
+Theorem not_closed_Nop:
   forall n: nat, ~ closed_code n Nop.
 Proof.
   intros n H.
@@ -74,7 +74,7 @@ Proof.
   intro H1; inversion H1.
 Save.
 
-Lemma closed_Access:
+Theorem closed_Access:
   forall (n m: nat) (c: krivine_code),
   closed_code n (Access m c) -> m < n.
 Proof.
@@ -85,7 +85,7 @@ Proof.
   trivial.
 Save.
 
-Lemma closed_Access_iff:
+Theorem closed_Access_iff:
   forall (n m: nat) (c: krivine_code),
   m < n -> closed_code n (Access m c).
 Proof.
@@ -95,28 +95,82 @@ Proof.
   apply conj; trivial.
 Save.
 
-Lemma closed_Grab_S:
+Theorem closed_Grab_S:
   forall (n: nat) (c: krivine_code),
   closed_code n (Grab c) -> closed_code (S n) c.
 Proof.
   intros n c.
-  unfold closed_code; simpl.
 
   (* We need to introduce (tau_code c) as a (option lterm) *)
   cut (exists ot: option lterm, tau_code c = ot).
     Focus 2. exists (tau_code c); trivial.
   intro Hot; destruct Hot as [ot Hot].
 
-  (* Prove that ot is (Some a) *)
-  induction ot.
-    Focus 2. rewrite Hot; simpl.
-    intro H; destruct H as [t H]. destruct H.
-    inversion H.
+  (* Clear any reference to (tau_code c) *)
+  unfold closed_code; simpl; rewrite Hot.
+  clear Hot c.
 
-  rewrite Hot; simpl.
   intro H; destruct H as [t H]. destruct H.
-  inversion H.
+
+  (* Prove that ot is (Some a) *)
+  induction ot; inversion H.
   exists a; apply conj; trivial.
   generalize H0.
-  rewrite <- H2; simpl; trivial.
+  rewrite <- H2; trivial.
+Save.
+
+(** Intermediate lemma *)
+Lemma closed_Push_internal:
+  forall (n: nat) (c0 c: krivine_code), closed_code n (Push c0 c) ->
+  exists (t t0: lterm),
+  tau_code c = Some t /\ tau_code c0 = Some t0 /\ fr_below n (Apply t t0).
+Proof.
+  intros n c0 c.
+  unfold closed_code; simpl.
+
+  (* Introduce (tau_code c) : (option lterm) *)
+  cut (exists ot: option lterm, tau_code c = ot).
+    Focus 2. exists (tau_code c); trivial.
+  intro Hot; destruct Hot as [ot Hot].
+  rewrite Hot. clear Hot c.
+
+  (* Introduce (tau_code c0) : (option lterm) *)
+  cut (exists ot: option lterm, tau_code c0 = ot).
+    Focus 2. exists (tau_code c0); trivial.
+  intro Hot; destruct Hot as [ot0 Hot].
+  rewrite Hot. clear Hot c0.
+
+  intro H; destruct H as [t H]. destruct H.
+  induction ot; inversion H. clear H2.
+  induction ot0; inversion H.
+  exists a; exists a0; apply conj; trivial; apply conj; trivial.
+  generalize H0. rewrite <- H2; trivial.
+Save.
+
+Theorem closed_Push1:
+  forall (n: nat) (c0 c: krivine_code),
+  closed_code n (Push c0 c) -> closed_code n c0.
+Proof.
+  intros n c0 c H.
+  unfold closed_code; simpl.
+  elim (closed_Push_internal n c0 c H).
+  intros x H0.
+  destruct H0 as [t0 H0]. destruct H0; destruct H1.
+  generalize H2; clear H2; simpl; intro H2.
+  destruct H2.
+  exists t0; apply conj; trivial.
+Save.
+
+Theorem closed_Push2:
+  forall (n: nat) (c0 c: krivine_code),
+  closed_code n (Push c0 c) -> closed_code n c.
+Proof.
+  intros n c0 c H.
+  unfold closed_code; simpl.
+  elim (closed_Push_internal n c0 c H).
+  intros x H0.
+  destruct H0 as [t0 H0]. destruct H0; destruct H1.
+  generalize H2; clear H2; simpl; intro H2.
+  destruct H2.
+  exists x; apply conj; trivial.
 Save.

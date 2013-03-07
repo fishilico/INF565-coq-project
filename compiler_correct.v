@@ -82,3 +82,11 @@ Proof.
   apply Correct_env; simpl; trivial.
     apply closed_Grab_S; trivial.
     apply Correct_env; trivial.
+
+  (* correct_state (krivine_step (KEnv (Push k1 k2) st1 st2)) *)
+  simpl; apply correct_env_is_state.
+  apply Correct_env; simpl; trivial.
+    apply (closed_Push2 (klength st1) k1 k2); trivial.
+    apply Correct_env; trivial.
+    apply (closed_Push1 (klength st1) k1 k2); trivial.
+Save.
