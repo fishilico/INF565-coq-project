@@ -21,6 +21,7 @@ doc: $(OBJECTS)
 
 beta_reduction.vo: lterm.vo substitution.vo
 compiler.vo: free_variables.vo krivine.vo lterm.vo substitute_list.vo
+compiler_correct.vo: compiler.vo
 free_variables.vo: Arith_ext.vo lterm.vo
 substitute_list.vo: Arith_ext.vo free_variables.vo lterm.vo substitute_varlist.vo
 substitute_varlist.vo: Arith_ext.vo lterm.vo substitution.vo
