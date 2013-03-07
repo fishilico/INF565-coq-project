@@ -33,6 +33,30 @@ Fixpoint klength (e: krivine_env) : nat :=
   end
 .
 
+Lemma klength_O_is_nil:
+  forall e: krivine_env, klength e = O -> e = KEnv_nil.
+Proof.
+  induction e; simpl; intro H; trivial.
+  inversion H.
+Save.
+
+Lemma klength_nonO_is_not_nil:
+  forall e: krivine_env, klength e <> O -> e <> KEnv_nil.
+Proof.
+  intros e H H0.
+  contradict H.
+  rewrite H0; trivial.
+Save.
+
+Lemma klength_pos_is_not_nil:
+  forall e: krivine_env, klength e > O -> e <> KEnv_nil.
+Proof.
+  intros e H H0.
+  contradict H.
+  rewrite H0; simpl.
+  auto with arith.
+Save.
+
 (** 3.3. Semantic: execute one step.
   Return KEnv_nil if there were some error, a krivine_state otherwise.
  *)

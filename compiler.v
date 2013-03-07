@@ -24,6 +24,15 @@ Fixpoint tau_code (c: krivine_code) : option lterm :=
   end
 .
 
+(** 5.2. *)
+Theorem compile_term_tau_ident:
+  forall t: lterm, tau_code (comp t) = Some t.
+Proof.
+  induction t; simpl; trivial.
+  rewrite IHt; trivial.
+  rewrite IHt1; rewrite IHt2; trivial.
+Save.
+
 (** Reverse translate a Krivine environment *)
 Fixpoint tau_env (e: krivine_env) : list lterm :=
   match e with
@@ -61,25 +70,27 @@ Lemma not_closed_Nop:
 Proof.
   intros n H.
   inversion H.
-  destruct H0.
-  contradict H0.
-  simpl.
-  intro H0.
-  inversion H0.
+  elim H0; simpl.
+  intro H1; inversion H1.
 Save.
 
-Lemma not_closed_Access:
-  forall (n: nat) (c: krivine_code), ~ closed_code O (Access n c).
+Lemma closed_Access:
+  forall (n m: nat) (c: krivine_code),
+  closed_code n (Access m c) -> m < n.
 Proof.
-  intros n c H.
+  intros n m c H.
   inversion H.
-  contradict H0.
-  simpl.
-  intro H0.
-  destruct H0.
-  inversion H0.
-  contradict H1.
-  rewrite <- H3.
-  simpl.
-  auto with arith.
+  elim H0; simpl.
+  intro H1; inversion H1.
+  trivial.
+Save.
+
+Lemma closed_Access_iff:
+  forall (n m: nat) (c: krivine_code),
+  m < n -> closed_code n (Access m c).
+Proof.
+  intros n m c H.
+  unfold closed_code; simpl.
+  exists (Var m).
+  apply conj; trivial.
 Save.
