@@ -94,3 +94,29 @@ Proof.
   exists (Var m).
   apply conj; trivial.
 Save.
+
+Lemma closed_Grab_S:
+  forall (n: nat) (c: krivine_code),
+  closed_code n (Grab c) -> closed_code (S n) c.
+Proof.
+  intros n c.
+  unfold closed_code; simpl.
+
+  (* We need to introduce (tau_code c) as a (option lterm) *)
+  cut (exists ot: option lterm, tau_code c = ot).
+    Focus 2. exists (tau_code c); trivial.
+  intro Hot; destruct Hot as [ot Hot].
+
+  (* Prove that ot is (Some a) *)
+  induction ot.
+    Focus 2. rewrite Hot; simpl.
+    intro H; destruct H as [t H]. destruct H.
+    inversion H.
+
+  rewrite Hot; simpl.
+  intro H; destruct H as [t H]. destruct H.
+  inversion H.
+  exists a; apply conj; trivial.
+  generalize H0.
+  rewrite <- H2; simpl; trivial.
+Save.

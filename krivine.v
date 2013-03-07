@@ -68,6 +68,9 @@ Definition krivine_step (st: krivine_env) : krivine_env :=
     | KEnv (Push c0 c) e s => krivine_state c e (KEnv c0 e s)
     | KEnv (Grab c) e (KEnv c0 e0 s) =>
         krivine_state c (KEnv c0 e0 e) s
+    (* Final state *)
+    | KEnv (Grab c) e KEnv_nil => st
+    (* Invalid states *)
     | _ => KEnv_nil
   end
 .

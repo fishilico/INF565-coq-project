@@ -68,13 +68,17 @@ Proof.
   clear IHst1_1 IHst1_2.
   (* Now st1 = KEnv k0 st1_1 st1_2 *)
   inversion H4. clear H H0 H2 c0 e0 e.
-  unfold correct_state.
-  apply conj. intro Hconj; induction n; inversion Hconj.
   simpl.
-  induction n; apply Correct_env; trivial.
+  induction n; apply correct_env_is_state; apply Correct_env; trivial.
   apply closed_Access_iff.
   apply lt_S_n.
   generalize H3; simpl.
   apply closed_Access.
 
   (* correct_state (krivine_step (KEnv (Grab k) st1 st2)) *)
+  induction st2; simpl; apply correct_env_is_state; trivial.
+  clear IHst2_1 IHst2_2.
+  inversion H5. clear H H0 H2 c0 e0 e.
+  apply Correct_env; simpl; trivial.
+    apply closed_Grab_S; trivial.
+    apply Correct_env; trivial.
