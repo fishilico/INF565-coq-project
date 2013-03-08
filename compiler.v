@@ -64,7 +64,7 @@ Definition closed_code (n: nat) (c: krivine_code): Prop :=
    exists t: lterm, tau_code c = Some t /\ fr_below n t
 .
 
-(** Here are some lemmas using closed_code *)
+(** Here are some theorems using closed_code *)
 Theorem not_closed_Nop:
   forall n: nat, ~ closed_code n Nop.
 Proof.
@@ -119,7 +119,7 @@ Proof.
   rewrite <- H2; trivial.
 Save.
 
-(** Intermediate lemma *)
+(** Intermediate lemma for Push *)
 Lemma closed_Push_internal:
   forall (n: nat) (c0 c: krivine_code), closed_code n (Push c0 c) ->
   exists (t t0: lterm),

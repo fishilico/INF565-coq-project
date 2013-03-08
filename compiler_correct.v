@@ -1,5 +1,5 @@
 (** 5. Proof of the compiler, with correct states *)
-Require Import Arith beta_reduction compiler krivine List lterm substitute_list.
+Require Import Arith beta_reduction compiler krivine List lterm substitute_list substitute_varlist.
 
 (** Correct environment/stack/state (that's the same object) *)
 Inductive correct_env: krivine_env -> Prop :=
@@ -24,6 +24,16 @@ Proof.
   unfold correct_state.
   apply conj; trivial.
   intro H0. inversion H0.
+Save.
+
+(** Link the lengths of the lists in tau_env *)
+Lemma length_tau_env:
+  forall e: krivine_env, correct_env e -> length (tau_env e) = klength e.
+Proof.
+  induction e; simpl; trivial.
+  intro H; inversion H. clear H0 H1 H2 c0 e0 e.
+  inversion H3. destruct H0. rewrite H0; simpl.
+  rewrite IHe2; trivial.
 Save.
 
 (** An environment with Nop as code is always incorrect *)
@@ -89,16 +99,89 @@ Proof.
     apply Correct_env; trivial.
     apply (closed_Push1 (klength st1) k1 k2); trivial.
 Save.
-(*
+
 (** 5.4. *)
+(** Here are some lemmas with krivine_step *)
+Theorem kstep_Access:
+  forall (n: nat) (c: krivine_code) (e s: krivine_env),
+  correct_env (KEnv (Access n c) e s) ->
+  tau_env (krivine_step (KEnv (Access n c) e s)) =
+    tau_env (KEnv (Access n c) e s).
+Proof.
+  intros n c e s H; simpl.
+  inversion H. clear H0 H1 H2 c0 e0 e1.
+
+  (* Prove n < klength e *)
+  inversion H3. destruct H0. simpl in H0. inversion H0; clear H0.
+  rewrite <- H6 in H1 ; clear H6 x; simpl in H1.
+
+  (* Prove e <> Kenv_nil *)
+  induction e; simpl.
+    contradict H1; simpl. auto with arith.
+  clear IHe1 IHe2.
+
+  (* Prove tau_code k <> None *)
+  inversion H4. clear H0 H2 H6 c0 e0 e.
+  inversion H7. destruct H0.
+  rewrite H0; simpl.
+
+  (* case n = 0 is immediate *)
+  induction n; simpl. rewrite H0; trivial. clear IHn.
+
+  (* Need to prove that n < length (tau_env e2) *)
+  rewrite (substitute_vl_nth_from_O n (tau_env e2) (Var n)).
+  rewrite (substitute_vl_nth_from_O n (tau_env e2) (Var (S n))).
+  rewrite (nth_indep (tau_env e2) (Var n) (Var (S n))); trivial.
+  rewrite (length_tau_env e2); trivial.
+  simpl in H1.
+  auto with arith.
+Save.
+(*
 Theorem krivine_step_is_beta_reduct:
   forall st: krivine_env, correct_state st ->
-  forall t u: lterm,
-    tau_state st = Some t ->
-    tau_state (krivine_step st) = Some u -> t = u \/ beta_reduct t u.
+  exists t u: lterm,
+    tau_state st = Some t /\
+    tau_state (krivine_step st) = Some u /\
+    (t = u \/ beta_reduct t u).
 Proof.
+  induction st; intro Hst; inversion Hst as [HstNeq HstEnv].
+    contradict HstNeq; trivial.
+  (* st = KEnv k st1 st2 and there are recursive hypothesis on st1 and st2 *)
+
+  (* Induction on code *)
+  induction k; unfold tau_state.
+
+  (* k = Nop *)
+  contradict HstEnv.
+  apply incorrect_Nop.
+
+  (* k = Access, st1 <> Kenv_nil *)
+  inversion HstEnv. clear H H0 H1 c0 e0 e.
+  induction st1. contradict HstEnv. apply incorrect_Access.
+  clear IHst1_1 IHst1_2.
+  induction n.
+    simpl.
+
+  simpl.
+  generalize IHst1.
+
+
+
+
+
+STOP.
   intros st H t u.
   elim H; intros H0 H1.
+
+
+
+  inversion HstEnv. clear H H0 H1 c0 e0 e.
+
+  (* Prove st = KEnv k st1 st2 *)
+  induction st. contradict H0; trivial. simpl. clear IHst1 IHst2.
+  (* Prove tau_code k = Some x *)
+  inversion H1. clear H4 H5 H6 c0 e0 e.
+  inversion H7. destruct H4.
 
   (* Introduce (krivine_step st) as st' *)
   cut (exists st': krivine_env, krivine_step st = st').

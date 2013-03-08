@@ -122,6 +122,16 @@ Proof.
     auto with arith.
 Save.
 
+Lemma substitute_vl_nth_from_O:
+  forall (x: nat) (ul: list lterm) (d: lterm),
+  subst_var_list x O ul d = nth x ul d.
+Proof.
+  intros x ul d.
+  rewrite (substitute_vl_nth x O ul d); auto with arith.
+  cut (x = (x - O)); auto with arith.
+  intro H0; rewrite H0 at 2; trivial.
+Save.
+
 Lemma substitute_vl_in:
   forall (x i: nat) (ul: list lterm) (d: lterm),
   i <= x < i + length ul -> In (subst_var_list x i ul d) ul.
