@@ -89,3 +89,80 @@ Proof.
     apply Correct_env; trivial.
     apply (closed_Push1 (klength st1) k1 k2); trivial.
 Save.
+(*
+(** 5.4. *)
+Theorem krivine_step_is_beta_reduct:
+  forall st: krivine_env, correct_state st ->
+  forall t u: lterm,
+    tau_state st = Some t ->
+    tau_state (krivine_step st) = Some u -> t = u \/ beta_reduct t u.
+Proof.
+  intros st H t u.
+  elim H; intros H0 H1.
+
+  (* Introduce (krivine_step st) as st' *)
+  cut (exists st': krivine_env, krivine_step st = st').
+    Focus 2. exists (krivine_step st); trivial.
+  intro Hst'; destruct Hst' as [st' Hst'].
+
+  (* st' is a correct state *)
+  elim (step_correctness st H).
+  rewrite Hst'.
+  intros H2 H3.
+
+  (* Prove st = KEnv k st1 st2 *)
+  induction st. contradict H0; trivial. clear IHst1 IHst2.
+  (* Prove tau_code k = Some x *)
+  inversion H1. clear H4 H5 H6 c0 e0 e.
+  inversion H7. destruct H4.
+
+  (* Same things with st', tau_code k0 = Some x0 *)
+  induction st'. contradict H2; trivial. clear IHst'1 IHst'2.
+  inversion H3. clear H6 H10 H11 c0 e0 e.
+  inversion H12. destruct H6.
+
+  unfold tau_state; simpl.
+  rewrite H4; rewrite H6; simpl.
+  induction k; simpl in H4; inversion H4.
+
+  (* k = Access *)
+  clear IHk.
+  rewrite <- H15 in H5. simpl in H5. clear H4 H15 x.
+  simpl.
+(*
+unfold krivine_step in Hst'.
+  simpl.
+  induction st1. contradict H1. apply incorrect_Access. clear IHst1_1 IHst1_2.
+induction n. simpl.
+TODO
+*)
+
+  Focus 2.
+  (* k = Grab *)
+  clear IHk.
+  simpl in Hst'.
+
+  induction (tau_env st'2).
+    (* tau_env st'2 = nil *)
+    simpl.
+
+  induction st2; inversion Hst'.
+    (* st2 = KEnv_nil -> no change *)
+    simpl.
+    rewrite <- H16 in H6; simpl in H6.
+    rewrite H4 in H6.
+    inversion H6.
+    intro H20; rewrite H20.
+    intro H21; inversion H21.
+    apply or_introl; trivial.
+
+    (* st2 = KEnv ... *)
+    clear IHst2_1 IHst2_2.
+    rewrite <- H16 in H6.
+    rewrite H6 in H15; simpl in H15. inversion H15. clear H15.
+    simpl.
+    induction (tau_code k1).
+      (* tau_code k1 = Some a *)
+      simpl.
+
+*)
