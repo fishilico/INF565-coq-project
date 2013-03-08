@@ -1,5 +1,5 @@
 (** 5. Proof of the compiler, with correct states *)
-Require Import Arith compiler krivine List lterm.
+Require Import Arith beta_reduction compiler krivine List lterm substitute_list.
 
 (** Correct environment/stack/state (that's the same object) *)
 Inductive correct_env: krivine_env -> Prop :=
@@ -42,11 +42,11 @@ Lemma incorrect_Access:
   ~ correct_env (KEnv (Access n c) KEnv_nil s).
 Proof.
   intros n c s H.
-  inversion H. clear H0 H1 H2 c0 e0 e.
-  generalize H3; simpl; intro H0. clear H3.
+  (* Use (closed_Access O n c) *)
   cut (n < O).
-    intro H1; contradict H1; auto with arith.
-  apply (closed_Access O n c); trivial.
+    intro Hfalse; contradict Hfalse; auto with arith.
+  apply (closed_Access O n c).
+  inversion H. trivial.
 Save.
 
 (** 5.3. *)
@@ -63,8 +63,7 @@ Proof.
   apply incorrect_Nop.
 
   (* correct_state (krivine_step (KEnv (Access n k) st1 st2)) *)
-  induction st1.
-    contradict H1. apply incorrect_Access.
+  induction st1. contradict H1. apply incorrect_Access.
   clear IHst1_1 IHst1_2.
   (* Now st1 = KEnv k0 st1_1 st1_2 *)
   inversion H4. clear H H0 H2 c0 e0 e.

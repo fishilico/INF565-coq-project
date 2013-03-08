@@ -4,7 +4,3 @@ Inductive lterm : Set :=
   | Lambda: lterm -> lterm
   | Apply: lterm -> lterm -> lterm
 .
-
-(* Example of function: the identity *)
-Definition l_id: lterm := Lambda (Var O)
-.
