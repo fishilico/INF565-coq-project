@@ -265,21 +265,13 @@ Proof.
   apply closed_correct_env; trivial.
 Save.
 
-(** 5.4. Theorem *)
-Theorem krivine_step_is_beta_reduct:
-  forall st: krivine_env, correct_state st ->
-  exists t: lterm, Some t = tau_state st ->
-  exists u: lterm, Some u = tau_state (krivine_step st) ->
+Lemma tau_state_kstep_all:
+  forall (st: krivine_env) (t u: lterm), correct_state st ->
+  tau_state st = Some t ->
+  tau_state (krivine_step st) = Some u ->
     (t = u \/ beta_reduct t u).
 Proof.
-  intros st Hst.
-
-  (* Use tau_state_correct_is_some *)
-  elim (tau_state_correct_is_some st); trivial.
-  intros t Ht. exists t; intro Hcleared; clear Hcleared.
-  elim (tau_state_correct_is_some (krivine_step st)).
-    Focus 2. apply step_correctness; trivial.
-  intros u Hu. exists u; intro Hcleared; clear Hcleared.
+  intros st t u Hst Ht Hu.
 
   (* st = KEnv k st1 st2 *)
   inversion Hst as [HstNeq HstEnv].
@@ -303,4 +295,80 @@ Proof.
   (* Push *)
   rewrite (tau_state_kstep_Push k1 k2 st1 st2) in Hu; trivial.
   rewrite Hu in Ht. inversion Ht. auto.
+Save.
+
+(** 5.4. Theorem *)
+Theorem krivine_step_is_beta_reduct:
+  forall st: krivine_env, correct_state st ->
+  exists t: lterm, Some t = tau_state st ->
+  exists u: lterm, Some u = tau_state (krivine_step st) ->
+    (t = u \/ beta_reduct t u).
+Proof.
+  intros st Hst.
+
+  (* Use tau_state_correct_is_some *)
+  elim (tau_state_correct_is_some st); trivial.
+  intros t Ht. exists t; intro Hcleared; clear Hcleared.
+  elim (tau_state_correct_is_some (krivine_step st)).
+    Focus 2. apply step_correctness; trivial.
+  intros u Hu. exists u; intro Hcleared; clear Hcleared.
+
+  apply (tau_state_kstep_all st); trivial.
+Save.
+
+(** 5.5. *)
+(** Extend 5.3 to krivine_step_star *)
+Theorem krivine_step_star_correctness:
+  forall st st': krivine_env, krivine_step_star st st' ->
+  correct_state st -> correct_state st'.
+Proof.
+  intros st st' H.
+  induction H; trivial.
+  intro H0.
+  apply IHkrivine_step_star.
+  apply step_correctness; trivial.
+Save.
+
+(** Extend 5.4 to krivine_step_star *)
+Lemma tau_state_kstep_star_all:
+  forall (st st': krivine_env),
+  krivine_step_star st st' -> correct_state st ->
+    forall (t u: lterm),
+    tau_state st = Some t -> tau_state st' = Some u ->
+    beta_reduct_star t u.
+Proof.
+  intros st st' H.
+  induction H; intros Hst t v Ht Hv.
+    rewrite Hv in Ht. inversion Ht. apply Beta_reduct_star_eq.
+  (* Introduce Some u = tau_state (krivine_step st) *)
+  elim (tau_state_correct_is_some (krivine_step st)).
+    Focus 2. apply step_correctness; trivial.
+  intros u Hu.
+
+  (* t and u may be equals *)
+  elim (tau_state_kstep_all st t u); trivial; intro H0.
+    (* t = u *)
+    rewrite H0.
+    apply IHkrivine_step_star; trivial.
+    apply step_correctness; trivial.
+
+    (* beta_reduct t u *)
+    apply (Beta_reduct_star_step t u v); trivial.
+    apply IHkrivine_step_star; trivial.
+    apply step_correctness; trivial.
+Save.
+
+Theorem krivine_step_is_beta_reduct_star:
+  forall st st': krivine_env, krivine_step_star st st' -> correct_state st ->
+  exists t: lterm, Some t = tau_state st ->
+  exists u: lterm, Some u = tau_state st' ->
+    beta_reduct_star t u.
+Proof.
+  intros st st' H Hst.
+  elim (tau_state_correct_is_some st); trivial.
+  intros t Ht. exists t; intro Hcleared; clear Hcleared.
+  elim (tau_state_correct_is_some st').
+    Focus 2. apply (krivine_step_star_correctness st st'); trivial.
+  intros u Hu. exists u; intro Hcleared; clear Hcleared.
+  apply (tau_state_kstep_star_all st st'); trivial.
 Save.

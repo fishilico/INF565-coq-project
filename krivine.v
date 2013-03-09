@@ -74,3 +74,10 @@ Definition krivine_step (st: krivine_env) : krivine_env :=
     | _ => KEnv_nil
   end
 .
+
+(** Execute any number of steps *)
+Inductive krivine_step_star: krivine_env -> krivine_env -> Prop :=
+  | Krivine_step_star_eq: forall st: krivine_env, krivine_step_star st st
+  | Krivine_step_star_step: forall st st': krivine_env,
+      krivine_step_star (krivine_step st) st' -> krivine_step_star st st'
+.
