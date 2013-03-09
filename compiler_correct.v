@@ -102,6 +102,18 @@ Proof.
 Save.
 
 (** 5.4. *)
+(** tau_state is never None for correct state *)
+Lemma tau_state_correct_is_some:
+  forall st: krivine_env, correct_state st -> exists t: lterm, tau_state st = Some t.
+Proof.
+  (* st is not nil *)
+  induction st; intro H; inversion H. contradict H0; trivial.
+  unfold tau_state; simpl.
+  inversion H1. clear H2 H3 H4 c0 e0 e.
+  inversion H5. destruct H2. rewrite H2; simpl.
+  apply list_lterm_to_apply_is_some.
+Save.
+
 (** Lemma for Beta-reduction and tau_state, which uses list_lterm_to_apply *)
 Lemma beta_reduct_list_lterm_to_apply:
   forall (l: list lterm) (t u t' u': lterm), beta_reduct t u ->
@@ -203,13 +215,13 @@ Proof.
 Save.
 
 Lemma tau_state_kstep_Grab:
-  forall (c: krivine_code) (e: krivine_env) (s: krivine_env),
+  forall (c: krivine_code) (e: krivine_env) (s: krivine_env) (t u: lterm),
   correct_env (KEnv (Grab c) e s) ->
-  exists t': lterm, Some t' = tau_state (KEnv (Grab c) e s) ->
-  exists u': lterm, Some u' = tau_state (krivine_step (KEnv (Grab c) e s)) ->
-    (t' = u' \/ beta_reduct t' u').
+  tau_state (KEnv (Grab c) e s) = Some t ->
+  tau_state (krivine_step (KEnv (Grab c) e s)) = Some u ->
+  (t = u \/ beta_reduct t u).
 Proof.
-  intros c e s H; unfold tau_state; simpl.
+  intros c e s t u H. unfold tau_state; simpl.
   inversion H. clear H0 H1 H2 c0 e0 e1.
 
   (* Prove tau_code c <> None *)
@@ -226,9 +238,8 @@ Proof.
 
   (* If the stack is empty, krivine_step is identity, this is almost trivial *)
   induction s; simpl; rewrite Hc; simpl.
-    exists (Lambda (subst_list a 1 (tau_env e))); intro Ht'.
-    exists (Lambda (subst_list a 1 (tau_env e))); intro Hu'.
-    apply or_introl; trivial.
+    intros Ht Hu. inversion Ht as [Ht']. rewrite Ht'; rewrite Ht' in Hu.
+    inversion Hu. auto.
   clear IHs1 IHs2.
   (* Now s = KEnv k s1 s2 *)
 
@@ -238,13 +249,7 @@ Proof.
   rewrite H0; simpl.
 
   (* Use beta_reduct_list_lterm_to_apply *)
-  elim (list_lterm_to_apply_is_some (tau_env s2)
-      (Apply (Lambda (subst_list a 1 (tau_env e))) (subst_list x 0 (tau_env s1)))).
-  intros t' Ht. exists t'; intro Hcleared; clear Hcleared.
-  elim (list_lterm_to_apply_is_some (tau_env s2)
-      (subst_list a 0 (subst_list x 0 (tau_env s1) :: tau_env e))).
-  intros u' Hu. exists u'; intro Hcleared; clear Hcleared.
-  apply or_intror.
+  intros Ht Hu. apply or_intror.
   apply (beta_reduct_list_lterm_to_apply (tau_env s2)
       (Apply (Lambda (subst_list a 1 (tau_env e))) (subst_list x 0 (tau_env s1)))
       (subst_list a 0 (subst_list x 0 (tau_env s1) :: tau_env e))).
@@ -260,116 +265,42 @@ Proof.
   apply closed_correct_env; trivial.
 Save.
 
-(*
+(** 5.4. Theorem *)
 Theorem krivine_step_is_beta_reduct:
   forall st: krivine_env, correct_state st ->
-  exists t u: lterm,
-    tau_state st = Some t /\
-    tau_state (krivine_step st) = Some u /\
+  exists t: lterm, Some t = tau_state st ->
+  exists u: lterm, Some u = tau_state (krivine_step st) ->
     (t = u \/ beta_reduct t u).
 Proof.
-  induction st; intro Hst; inversion Hst as [HstNeq HstEnv].
-    contradict HstNeq; trivial.
-  (* st = KEnv k st1 st2 and there are recursive hypothesis on st1 and st2 *)
+  intros st Hst.
+
+  (* Use tau_state_correct_is_some *)
+  elim (tau_state_correct_is_some st); trivial.
+  intros t Ht. exists t; intro Hcleared; clear Hcleared.
+  elim (tau_state_correct_is_some (krivine_step st)).
+    Focus 2. apply step_correctness; trivial.
+  intros u Hu. exists u; intro Hcleared; clear Hcleared.
+
+  (* st = KEnv k st1 st2 *)
+  inversion Hst as [HstNeq HstEnv].
+  induction st. contradict HstNeq; trivial.
+  clear IHst1 IHst2.
 
   (* Induction on code *)
-  induction k; unfold tau_state.
+  induction k.
 
-  (* k = Nop *)
+  (* Nop is incorrect *)
   contradict HstEnv.
   apply incorrect_Nop.
 
-  (* k = Access, st1 <> Kenv_nil *)
-  inversion HstEnv. clear H H0 H1 c0 e0 e.
-  induction st1. contradict HstEnv. apply incorrect_Access.
-  clear IHst1_1 IHst1_2.
-  induction n.
-    simpl.
+  (* Access *)
+  rewrite (tau_state_kstep_Access n k st1 st2) in Hu; trivial.
+  rewrite Hu in Ht. inversion Ht. auto.
 
-  simpl.
-  generalize IHst1.
+  (* Grab *)
+  apply (tau_state_kstep_Grab k st1 st2); trivial.
 
-
-
-
-
-STOP.
-  intros st H t u.
-  elim H; intros H0 H1.
-
-
-
-  inversion HstEnv. clear H H0 H1 c0 e0 e.
-
-  (* Prove st = KEnv k st1 st2 *)
-  induction st. contradict H0; trivial. simpl. clear IHst1 IHst2.
-  (* Prove tau_code k = Some x *)
-  inversion H1. clear H4 H5 H6 c0 e0 e.
-  inversion H7. destruct H4.
-
-  (* Introduce (krivine_step st) as st' *)
-  cut (exists st': krivine_env, krivine_step st = st').
-    Focus 2. exists (krivine_step st); trivial.
-  intro Hst'; destruct Hst' as [st' Hst'].
-
-  (* st' is a correct state *)
-  elim (step_correctness st H).
-  rewrite Hst'.
-  intros H2 H3.
-
-  (* Prove st = KEnv k st1 st2 *)
-  induction st. contradict H0; trivial. clear IHst1 IHst2.
-  (* Prove tau_code k = Some x *)
-  inversion H1. clear H4 H5 H6 c0 e0 e.
-  inversion H7. destruct H4.
-
-  (* Same things with st', tau_code k0 = Some x0 *)
-  induction st'. contradict H2; trivial. clear IHst'1 IHst'2.
-  inversion H3. clear H6 H10 H11 c0 e0 e.
-  inversion H12. destruct H6.
-
-  unfold tau_state; simpl.
-  rewrite H4; rewrite H6; simpl.
-  induction k; simpl in H4; inversion H4.
-
-  (* k = Access *)
-  clear IHk.
-  rewrite <- H15 in H5. simpl in H5. clear H4 H15 x.
-  simpl.
-(*
-unfold krivine_step in Hst'.
-  simpl.
-  induction st1. contradict H1. apply incorrect_Access. clear IHst1_1 IHst1_2.
-induction n. simpl.
-TODO
-*)
-
-  Focus 2.
-  (* k = Grab *)
-  clear IHk.
-  simpl in Hst'.
-
-  induction (tau_env st'2).
-    (* tau_env st'2 = nil *)
-    simpl.
-
-  induction st2; inversion Hst'.
-    (* st2 = KEnv_nil -> no change *)
-    simpl.
-    rewrite <- H16 in H6; simpl in H6.
-    rewrite H4 in H6.
-    inversion H6.
-    intro H20; rewrite H20.
-    intro H21; inversion H21.
-    apply or_introl; trivial.
-
-    (* st2 = KEnv ... *)
-    clear IHst2_1 IHst2_2.
-    rewrite <- H16 in H6.
-    rewrite H6 in H15; simpl in H15. inversion H15. clear H15.
-    simpl.
-    induction (tau_code k1).
-      (* tau_code k1 = Some a *)
-      simpl.
-
-*)
+  (* Push *)
+  rewrite (tau_state_kstep_Push k1 k2 st1 st2) in Hu; trivial.
+  rewrite Hu in Ht. inversion Ht. auto.
+Save.
