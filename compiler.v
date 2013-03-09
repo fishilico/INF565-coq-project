@@ -9,6 +9,10 @@ Fixpoint comp (t: lterm) : krivine_code :=
   end
 .
 
+Definition comp_state (t: lterm) : krivine_env :=
+  krivine_state (comp t) KEnv_nil KEnv_nil
+.
+
 (** 5. Proof of the compiler *)
 (** tau is the reverse translation of the compiler *)
 Fixpoint tau_code (c: krivine_code) : option lterm :=
@@ -66,6 +70,14 @@ Theorem list_lterm_to_apply_is_some:
 Proof.
   induction l; intro t; simpl; trivial.
   exists t; trivial.
+Save.
+
+Theorem compile_term_tau_state_ident:
+  forall t: lterm, tau_state (comp_state t) = Some t.
+Proof.
+  intro t; unfold comp_state; unfold tau_state; simpl.
+  rewrite compile_term_tau_ident; simpl.
+  rewrite substitute_list_empty; trivial.
 Save.
 
 (** To define correct state, define C[n] predicate ("fr_below" in code) on a code *)

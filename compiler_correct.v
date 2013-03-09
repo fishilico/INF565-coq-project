@@ -372,3 +372,36 @@ Proof.
   intros u Hu. exists u; intro Hcleared; clear Hcleared.
   apply (tau_state_kstep_star_all st st'); trivial.
 Save.
+
+(** A compilation state is correct *)
+Lemma comp_state_is_correct:
+  forall t: lterm, closed t -> correct_state (comp_state t).
+Proof.
+  intros t H.
+  unfold comp_state. apply correct_env_is_state.
+  apply Correct_env; simpl.
+    unfold closed_code.
+    rewrite compile_term_tau_ident.
+    exists t; apply conj; trivial.
+
+    apply Correct_env_nil.
+    apply Correct_env_nil.
+Save.
+
+(** Compilation proof *)
+Theorem correct_compilation:
+  forall t: lterm, closed t ->
+  forall st': krivine_env, krivine_step_star (comp_state t) st' ->
+  exists u: lterm, Some u = tau_state st' -> beta_reduct_star t u.
+Proof.
+  intros t Ht st' H.
+  elim (tau_state_correct_is_some st').
+  intros u Hu. exists u; intro Hcleared; clear Hcleared.
+  apply (tau_state_kstep_star_all (comp_state t) st'); trivial.
+    apply comp_state_is_correct; trivial.
+    apply compile_term_tau_state_ident.
+
+  (* Prove correct_state st' *)
+  apply (krivine_step_star_correctness (comp_state t) st'); trivial.
+  apply comp_state_is_correct; trivial.
+Save.
