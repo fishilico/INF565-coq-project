@@ -59,6 +59,15 @@ Definition tau_state (st: krivine_env) : option lterm :=
   list_lterm_to_apply None (tau_env st)
 .
 
+(** list_lterm_to_apply often returns Some ... *)
+Theorem list_lterm_to_apply_is_some:
+  forall (l: list lterm) (t: lterm),
+  exists u: lterm, list_lterm_to_apply (Some t) l = Some u.
+Proof.
+  induction l; intro t; simpl; trivial.
+  exists t; trivial.
+Save.
+
 (** To define correct state, define C[n] predicate ("fr_below" in code) on a code *)
 Definition closed_code (n: nat) (c: krivine_code): Prop :=
    exists t: lterm, tau_code c = Some t /\ fr_below n t

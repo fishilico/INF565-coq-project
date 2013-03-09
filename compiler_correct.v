@@ -1,5 +1,6 @@
 (** 5. Proof of the compiler, with correct states *)
-Require Import Arith beta_reduction compiler krivine List lterm substitute_list substitute_varlist.
+Require Import Arith beta_reduction compiler free_variables krivine.
+Require Import List lterm substitute_list substitute_varlist.
 
 (** Correct environment/stack/state (that's the same object) *)
 Inductive correct_env: krivine_env -> Prop :=
@@ -101,8 +102,35 @@ Proof.
 Save.
 
 (** 5.4. *)
+(** Lemma for Beta-reduction and tau_state, which uses list_lterm_to_apply *)
+Lemma beta_reduct_list_lterm_to_apply:
+  forall (l: list lterm) (t u t' u': lterm), beta_reduct t u ->
+    Some t' = list_lterm_to_apply (Some t) l ->
+    Some u' = list_lterm_to_apply (Some u) l ->
+    beta_reduct t' u'.
+Proof.
+  induction l; intros t u t' u' H; simpl; intros Ht Hu.
+    inversion Ht; inversion Hu; trivial.
+  apply (IHl (Apply t a) (Apply u a)); trivial.
+  apply Beta_reduct_close_apply1; trivial.
+Save.
+
+(** A correct environment is closed *)
+Lemma closed_correct_env:
+  forall e: krivine_env, correct_env e -> fr_below_list O (tau_env e).
+Proof.
+  induction e; simpl; trivial; intro H.
+  inversion H. clear H0 H1 H2 c0 e0 e.
+  inversion H3. destruct H0. rewrite H0; simpl.
+  apply conj.
+    apply substitute_list_closed.
+      apply IHe1; trivial.
+      rewrite length_tau_env; trivial.
+    apply IHe2; trivial.
+Save.
+
 (** Here are some lemmas with krivine_step *)
-Theorem kstep_Access:
+Lemma tau_env_kstep_Access:
   forall (n: nat) (c: krivine_code) (e s: krivine_env),
   correct_env (KEnv (Access n c) e s) ->
   tau_env (krivine_step (KEnv (Access n c) e s)) =
@@ -136,6 +164,102 @@ Proof.
   simpl in H1.
   auto with arith.
 Save.
+
+Lemma tau_state_kstep_Access:
+  forall (n: nat) (c: krivine_code) (e s: krivine_env),
+  correct_env (KEnv (Access n c) e s) ->
+  tau_state (krivine_step (KEnv (Access n c) e s)) =
+    tau_state (KEnv (Access n c) e s).
+Proof.
+  intros n c e s H; unfold tau_state.
+  rewrite tau_env_kstep_Access; trivial.
+Save.
+
+Lemma tau_state_kstep_Push:
+  forall (c0 c: krivine_code) (e s: krivine_env),
+  correct_env (KEnv (Push c0 c) e s) ->
+  tau_state (krivine_step (KEnv (Push c0 c) e s)) =
+    tau_state (KEnv (Push c0 c) e s).
+Proof.
+  intros c0 c e s H; unfold tau_state; simpl.
+  inversion H. clear H0 H1 H2 c1 e0 e1.
+
+  (* Prove tau_code c <> None *)
+  inversion H3. destruct H0. simpl in H0.
+  cut (exists ot: option lterm, tau_code c = ot).
+    Focus 2. exists (tau_code c); trivial.
+  intro Hot; destruct Hot as [ot Hot].
+  rewrite Hot in H0.
+  induction ot. Focus 2. inversion H0.
+  rewrite Hot.
+
+  (* Prove tau_code c0 <> None *)
+  cut (exists ot0: option lterm, tau_code c0 = ot0).
+    Focus 2. exists (tau_code c0); trivial.
+  intro Hot0; destruct Hot0 as [ot0 Hot0].
+  rewrite Hot0 in H0.
+  induction ot0. Focus 2. inversion H0.
+  rewrite Hot0; trivial.
+Save.
+
+Lemma tau_state_kstep_Grab:
+  forall (c: krivine_code) (e: krivine_env) (s: krivine_env),
+  correct_env (KEnv (Grab c) e s) ->
+  exists t': lterm, Some t' = tau_state (KEnv (Grab c) e s) ->
+  exists u': lterm, Some u' = tau_state (krivine_step (KEnv (Grab c) e s)) ->
+    (t' = u' \/ beta_reduct t' u').
+Proof.
+  intros c e s H; unfold tau_state; simpl.
+  inversion H. clear H0 H1 H2 c0 e0 e1.
+
+  (* Prove tau_code c <> None *)
+  inversion H3. destruct H0. simpl in H0.
+  cut (exists ot: option lterm, tau_code c = ot).
+    Focus 2. exists (tau_code c); trivial.
+  intro Hc; destruct Hc as [ot Hc].
+  rewrite Hc; rewrite Hc in H0.
+  induction ot; simpl. Focus 2. inversion H0.
+
+  (* Remove variable x *)
+  simpl in H0; inversion H0 as [Hx]; clear H0.
+  rewrite <- Hx in H1; simpl in H1; clear Hx x.
+
+  (* If the stack is empty, krivine_step is identity, this is almost trivial *)
+  induction s; simpl; rewrite Hc; simpl.
+    exists (Lambda (subst_list a 1 (tau_env e))); intro Ht'.
+    exists (Lambda (subst_list a 1 (tau_env e))); intro Hu'.
+    apply or_introl; trivial.
+  clear IHs1 IHs2.
+  (* Now s = KEnv k s1 s2 *)
+
+  (* Prove tau_code k <> None *)
+  inversion H5. clear H0 H2 H6 c0 e0 e1.
+  inversion H7. destruct H0.
+  rewrite H0; simpl.
+
+  (* Use beta_reduct_list_lterm_to_apply *)
+  elim (list_lterm_to_apply_is_some (tau_env s2)
+      (Apply (Lambda (subst_list a 1 (tau_env e))) (subst_list x 0 (tau_env s1)))).
+  intros t' Ht. exists t'; intro Hcleared; clear Hcleared.
+  elim (list_lterm_to_apply_is_some (tau_env s2)
+      (subst_list a 0 (subst_list x 0 (tau_env s1) :: tau_env e))).
+  intros u' Hu. exists u'; intro Hcleared; clear Hcleared.
+  apply or_intror.
+  apply (beta_reduct_list_lterm_to_apply (tau_env s2)
+      (Apply (Lambda (subst_list a 1 (tau_env e))) (subst_list x 0 (tau_env s1)))
+      (subst_list a 0 (subst_list x 0 (tau_env s1) :: tau_env e))).
+  Focus 2. rewrite Ht; trivial.
+  Focus 2. rewrite Hu; trivial.
+
+  (* Prove beta_reduct *)
+  rewrite (substitute_list_cons_free_eq a (tau_env e) O (subst_list x 0 (tau_env s1))).
+  rewrite substitute_list_singleton.
+  apply Beta_reduct_step.
+
+  (* Prove closed_list (tau_env e) *)
+  apply closed_correct_env; trivial.
+Save.
+
 (*
 Theorem krivine_step_is_beta_reduct:
   forall st: krivine_env, correct_state st ->
