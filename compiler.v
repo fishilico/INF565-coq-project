@@ -1,5 +1,5 @@
 (** 4. Compiler *)
-Require Import free_variables krivine List lterm substitute_list.
+Require Import closed_lterm krivine List lterm substitute_list.
 
 Fixpoint comp (t: lterm) : krivine_code :=
   match t with
@@ -82,7 +82,7 @@ Save.
 
 (** To define correct state, define C[n] predicate ("fr_below" in code) on a code *)
 Definition closed_code (n: nat) (c: krivine_code): Prop :=
-   exists t: lterm, tau_code c = Some t /\ fr_below n t
+   exists t: lterm, tau_code c = Some t /\ closed_n n t
 .
 
 (** Here are some theorems using closed_code *)
@@ -144,7 +144,7 @@ Save.
 Lemma closed_Push_internal:
   forall (n: nat) (c0 c: krivine_code), closed_code n (Push c0 c) ->
   exists (t t0: lterm),
-  tau_code c = Some t /\ tau_code c0 = Some t0 /\ fr_below n (Apply t t0).
+  tau_code c = Some t /\ tau_code c0 = Some t0 /\ closed_n n (Apply t t0).
 Proof.
   intros n c0 c.
   unfold closed_code; simpl.

@@ -1,5 +1,5 @@
 (** Example of function: the identity *)
-Require Import beta_reduction compiler compiler_correct free_variables krivine lterm.
+Require Import beta_reduction compiler compiler_correct closed_lterm krivine lterm.
 
 Definition l_id: lterm := Lambda (Var O)
 .

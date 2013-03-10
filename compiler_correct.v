@@ -1,5 +1,5 @@
 (** 5. Proof of the compiler, with correct states *)
-Require Import Arith beta_reduction compiler free_variables krivine.
+Require Import Arith beta_reduction compiler closed_lterm krivine.
 Require Import List lterm substitute_list substitute_varlist.
 
 (** Correct environment/stack/state (that's the same object) *)
@@ -129,7 +129,7 @@ Save.
 
 (** A correct environment is closed *)
 Lemma closed_correct_env:
-  forall e: krivine_env, correct_env e -> fr_below_list O (tau_env e).
+  forall e: krivine_env, correct_env e -> closed_n_list O (tau_env e).
 Proof.
   induction e; simpl; trivial; intro H.
   inversion H. clear H0 H1 H2 c0 e0 e.
@@ -257,7 +257,7 @@ Proof.
   Focus 2. rewrite Hu; trivial.
 
   (* Prove beta_reduct *)
-  rewrite (substitute_list_cons_free_eq a (tau_env e) O (subst_list x 0 (tau_env s1))).
+  rewrite substitute_list_cons_closed_eq.
   rewrite substitute_list_singleton.
   apply Beta_reduct_step.
 

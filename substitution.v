@@ -1,4 +1,4 @@
-Require Import Arith free_variables lterm.
+Require Import Arith closed_lterm lterm.
 
 (** Substitute a variable, (Var n)[x <- u], d = Var n before recursion *)
 Fixpoint subst_var (n x: nat) (u d: lterm) : lterm :=
@@ -68,9 +68,9 @@ Fixpoint subst (t: lterm) (x: nat) (u: lterm) : lterm :=
   end
 .
 
-(** Substitution on a free variable does nothing *)
-Lemma substitute_freevar_eq:
-  forall (t: lterm) (x: nat) (u: lterm), fr_below x t -> subst t x u = t.
+(** Substitution on a closed term does nothing *)
+Lemma substitute_closed_n_eq:
+  forall (t: lterm) (x: nat) (u: lterm), closed_n x t -> subst t x u = t.
 Proof.
   induction t; simpl; intros x u H.
     apply subst_var_lt; trivial.
@@ -80,12 +80,11 @@ Proof.
       rewrite (IHt2 x u); trivial.
 Save.
 
-(** Substitution on a closed term does nothing *)
 Theorem substitute_closed_eq:
   forall (t: lterm) (x: nat) (u: lterm), closed t -> subst t x u = t.
 Proof.
   intros t x u H.
-  apply (substitute_freevar_eq t x u).
-  apply (fr_below_incr t 0 x); trivial.
+  apply (substitute_closed_n_eq t x u).
+  apply (closed_n_incr t 0 x); trivial.
   auto with arith.
 Save.

@@ -1,4 +1,4 @@
-Require Import Arith free_variables List lterm substitution substitute_varlist.
+Require Import Arith closed_lterm List lterm substitution substitute_varlist.
 
 (** 1.4. Substitution with a list of terms i->u0, i+1->u1, i+2->u2, ... *)
 Fixpoint subst_list (t: lterm) (i: nat) (u: list lterm) : lterm :=
@@ -47,9 +47,9 @@ Proof.
 Save.
 
 (** 1.4.b *)
-Theorem substitute_singlelist_free_eq:
+Theorem substitute_singlelist_closed_eq:
   forall (t: lterm) (i: nat) (u: lterm),
-  fr_below i t -> subst_list t i (u :: nil) = t.
+  closed_n i t -> subst_list t i (u :: nil) = t.
 Proof.
   induction t; simpl; intros i u H; simpl.
     auto with substitute.
@@ -60,9 +60,9 @@ Proof.
 Save.
 
 (** 1.4.c *)
-Theorem substitute_list_cons_free_eq:
+Theorem substitute_list_cons_closed_eq:
   forall (t: lterm) (ul: list lterm) (i: nat) (u: lterm),
-  fr_below_list i ul ->
+  closed_n_list i ul ->
     subst_list t i (u :: ul) = subst_list (subst_list t (S i) ul) i (u :: nil).
 Proof.
   induction t; simpl; intros ul i u H.
@@ -81,33 +81,32 @@ Proof.
         rewrite substitute_vl_ne; auto with arith.
         rewrite substitute_vl_nil; trivial.
         (* In (subst_var_list n (S i) ul (Var n)) ul *)
-        rewrite (substitute_singlelist_free_eq
-          (subst_var_list n (S i) ul (Var n)) i u); trivial.
-        apply (fr_below_list_forall i ul); trivial.
+        rewrite substitute_singlelist_closed_eq; trivial.
+        apply (closed_n_list_forall i ul); trivial.
 
     (* Lambda *)
     rewrite IHt; trivial.
-    apply fr_below_list_S; trivial.
+    apply closed_n_list_S; trivial.
 
     (* Apply *)
     rewrite IHt1; trivial.
     rewrite IHt2; trivial.
 Save.
 
-Theorem substitute_list_closed_nat:
+Lemma substitute_list_closed_n:
   forall (t: lterm) (i: nat) (ul: list lterm),
-  fr_below_list i ul -> fr_below (i + length ul) t ->
-  fr_below i (subst_list t i ul).
+  closed_n_list i ul -> closed_n (i + length ul) t ->
+  closed_n i (subst_list t i ul).
 Proof.
   induction t; simpl; intros i ul H H0.
   (* Var *)
   elim (le_lt_dec i n); intro H1.
-    apply (fr_below_list_forall i ul); trivial.
+    apply (closed_n_list_forall i ul); trivial.
     apply substitute_vl_in. split; trivial.
     rewrite substitute_vl_lt; trivial.
   (* Lambda *)
   apply IHt; trivial.
-  apply fr_below_list_S; trivial.
+  apply closed_n_list_S; trivial.
   (* Apply *)
   destruct H0.
   split.
@@ -117,9 +116,9 @@ Save.
 
 Theorem substitute_list_closed:
   forall (t: lterm) (ul: list lterm),
-  fr_below_list O ul -> fr_below (length ul) t ->
+  closed_n_list O ul -> closed_n (length ul) t ->
   closed (subst_list t O ul).
 Proof.
   intros t ul H H0; unfold closed.
-  apply substitute_list_closed_nat; trivial.
+  apply substitute_list_closed_n; trivial.
 Save.
