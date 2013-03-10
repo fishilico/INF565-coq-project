@@ -161,11 +161,11 @@ Proof.
   intro Hot; destruct Hot as [ot0 Hot].
   rewrite Hot. clear Hot c0.
 
-  intro H; destruct H as [t H]. destruct H.
-  induction ot; inversion H. clear H2.
-  induction ot0; inversion H.
+  intro Ht; destruct Ht as [t Ht]. destruct Ht as [Ht Ht_closed].
+  induction ot; inversion Ht as [Hinv]. clear Hinv.
+  induction ot0; inversion Ht as [Hinv].
   exists a; exists a0; split; trivial; split; trivial.
-  generalize H0. rewrite <- H2; trivial.
+  generalize Ht_closed. rewrite <- Hinv; trivial.
 Save.
 
 Theorem closed_Push1:
