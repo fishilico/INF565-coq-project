@@ -1,4 +1,4 @@
-Require Import Arith_ext List lterm substitution.
+Require Import Arith List lterm substitution.
 
 (** Substitution of variable x in a list i->u0, i+1->u1, i+2->u2, ...
  * Return d by default
@@ -46,8 +46,8 @@ Proof.
     apply (substitute_vl_lt_with_diff x (i - (x + 1)) ul d).
 
     apply (le_plus_minus (x + 1) i).
-    rewrite <- (plus_Sn x).
-    apply (lt_le_S x i); trivial.
+    rewrite (plus_comm x 1).
+    auto with arith.
 Save.
 Hint Immediate substitute_vl_lt : substitute.
 

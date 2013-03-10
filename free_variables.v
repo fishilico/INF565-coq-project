@@ -32,14 +32,17 @@ Theorem fr_below_incr:
   fr_below n t -> n <= m -> fr_below m t.
 Proof.
   intros t n; induction m; simpl; intros H H0.
-    cut (O = n); auto with arith.
-    intro H1; rewrite H1; trivial.
-
-    cut ({n < S m} + {n = S m}).
-      Focus 2. apply le_lt_eq_dec; trivial.
-    intro H1; destruct H1.
-      apply (fr_below_S t m). apply IHm; trivial. auto with arith.
-      rewrite <- e; trivial.
+    (* m = 0 *)
+    generalize H.
+    elim (le_n_0_eq n); trivial.
+    (* m = S m *)
+    elim (le_lt_eq_dec n (S m)); trivial; clear H0; intro H0.
+      (* n < S m *)
+      apply (fr_below_S t m).
+      apply IHm; trivial.
+      auto with arith.
+      (* n = S m *)
+      rewrite <- H0; trivial.
 Save.
 
 (* forall u in ul, fr_below n u *)

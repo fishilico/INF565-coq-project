@@ -1,6 +1,6 @@
-Require Import Arith_ext free_variables List lterm substitution substitute_varlist.
+Require Import Arith free_variables List lterm substitution substitute_varlist.
 
-(* Substitution with a list of terms i->u0, i+1->u1, i+2->u2, ... *)
+(** 1.4. Substitution with a list of terms i->u0, i+1->u1, i+2->u2, ... *)
 Fixpoint subst_list (t: lterm) (i: nat) (u: list lterm) : lterm :=
   match t with
     | Var x =>  subst_var_list x i u (Var x)
@@ -9,6 +9,7 @@ Fixpoint subst_list (t: lterm) (i: nat) (u: list lterm) : lterm :=
   end
 .
 
+(** 1.4.a *)
 Theorem substitute_list_empty:
   forall (t: lterm) (i: nat), subst_list t i nil = t.
 Proof.
@@ -25,18 +26,17 @@ Theorem substitute_list_singleton:
 Proof.
   induction t; intros i u; simpl.
     (* t = Var n *)
-    cut (n = i \/ n <> i).
-      Focus 2. apply neq_or_eq.
-    intro H; destruct H.
+    elim (lt_eq_lt_dec n i); intro H. destruct H as [H | H].
+      (* n < i *)
+      rewrite subst_var_lt; trivial.
+      apply substitute_vl_lt; trivial.
       (* n = i *)
       rewrite <- H; simpl.
-      rewrite <- beq_nat_refl.
-      apply (substitute_vl_eq n u nil (Var n)).
-      (* n <> i *)
-      cut (beq_nat i n = false). Focus 2.
-        apply (beq_nat_false_iff i n). auto.
-      intro Hfalse; rewrite Hfalse; clear Hfalse.
-      rewrite substitute_vl_ne; trivial.
+      rewrite subst_var_eq.
+      apply substitute_vl_eq.
+      (* i < n *)
+      rewrite subst_var_gt; trivial.
+      rewrite substitute_vl_gt; trivial.
       apply substitute_vl_nil.
 
     (* t = Lamba *)
@@ -46,6 +46,7 @@ Proof.
     rewrite IHt1; rewrite IHt2; trivial.
 Save.
 
+(** 1.4.b *)
 Theorem substitute_singlelist_free_eq:
   forall (t: lterm) (i: nat) (u: lterm),
   fr_below i t -> subst_list t i (u :: nil) = t.
@@ -58,6 +59,7 @@ Proof.
       rewrite (IHt2 i u); trivial.
 Save.
 
+(** 1.4.c *)
 Theorem substitute_list_cons_free_eq:
   forall (t: lterm) (ul: list lterm) (i: nat) (u: lterm),
   fr_below_list i ul ->
@@ -65,18 +67,18 @@ Theorem substitute_list_cons_free_eq:
 Proof.
   induction t; simpl; intros ul i u H.
     (* Var *)
-    elim (neq_or_eq n i); intro H0.
+    elim (eq_nat_decide n i); intro H0.
       (* n = i *)
-      rewrite <- H0.
+      elim (eq_nat_eq n i); trivial.
       rewrite (substitute_vl_eq n u ul (Var n)).
       rewrite (substitute_vl_lt n (S n) ul (Var n)); auto with arith; simpl.
       auto with substitute.
       (* n <> i *)
-      rewrite (substitute_vl_ne n i u ul (Var n)); trivial.
+      rewrite (substitute_vl_ne n i u ul (Var n)); auto with arith.
       elim (substitute_vl_values n (S i) ul (Var n)); intro H1.
         (* subst_var_list n (S i) ul (Var n) = Var n *)
         rewrite H1; simpl.
-        rewrite substitute_vl_ne; trivial.
+        rewrite substitute_vl_ne; auto with arith.
         rewrite substitute_vl_nil; trivial.
         (* In (subst_var_list n (S i) ul (Var n)) ul *)
         rewrite (substitute_singlelist_free_eq
