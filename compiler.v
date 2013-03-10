@@ -113,7 +113,7 @@ Proof.
   intros n m c H.
   unfold closed_code; simpl.
   exists (Var m).
-  apply conj; trivial.
+  split; trivial.
 Save.
 
 Theorem closed_Grab_S:
@@ -135,7 +135,7 @@ Proof.
 
   (* Prove that ot is (Some a) *)
   induction ot; inversion H.
-  exists a; apply conj; trivial.
+  exists a; split; trivial.
   generalize H0.
   rewrite <- H2; trivial.
 Save.
@@ -164,7 +164,7 @@ Proof.
   intro H; destruct H as [t H]. destruct H.
   induction ot; inversion H. clear H2.
   induction ot0; inversion H.
-  exists a; exists a0; apply conj; trivial; apply conj; trivial.
+  exists a; exists a0; split; trivial; split; trivial.
   generalize H0. rewrite <- H2; trivial.
 Save.
 
@@ -179,7 +179,7 @@ Proof.
   destruct H0 as [t0 H0]. destruct H0; destruct H1.
   generalize H2; clear H2; simpl; intro H2.
   destruct H2.
-  exists t0; apply conj; trivial.
+  exists t0; split; trivial.
 Save.
 
 Theorem closed_Push2:
@@ -193,5 +193,5 @@ Proof.
   destruct H0 as [t0 H0]. destruct H0; destruct H1.
   generalize H2; clear H2; simpl; intro H2.
   destruct H2.
-  exists x; apply conj; trivial.
+  exists x; split; trivial.
 Save.

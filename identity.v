@@ -45,7 +45,7 @@ Proof.
   unfold closed_code.
   exists l_id.
   elim tau_id.
-  apply conj; trivial.
+  split; trivial.
   apply closed_id.
 Save.
 
@@ -96,7 +96,7 @@ Proof.
   unfold closed_code.
   exists l_id2.
   elim tau_id2.
-  apply conj; trivial.
+  split; trivial.
   apply closed_id2.
 Save.
 Theorem correct_id2:
@@ -104,9 +104,9 @@ Theorem correct_id2:
 Proof.
   apply correct_env_is_state.
   apply Correct_env; simpl.
-  apply closed_code_id2.
-  apply Correct_env_nil.
-  apply Correct_env_nil.
+    apply closed_code_id2.
+    apply Correct_env_nil.
+    apply Correct_env_nil.
 Save.
 
 (** Krivine steps on id2 *)
@@ -116,6 +116,5 @@ Theorem krivine_steps_id2:
     krivine_state (Access 0 Nop) kstate_id KEnv_nil /\
   krivine_step (krivine_step (krivine_step kstate_id2)) = kstate_id.
 Proof.
-  apply conj; trivial.
-  apply conj; trivial.
+  split; trivial; split; trivial.
 Save.

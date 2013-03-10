@@ -1,6 +1,6 @@
 Require Import Arith_ext free_variables lterm.
 
-(*
+(**
  * Substitute x with u in t, ie. return t[x <- u]
  *
  * (Var 0)[0 <- u] = u
@@ -15,7 +15,7 @@ Fixpoint subst (t: lterm) (x: nat) (u: lterm) : lterm :=
   end
 .
 
-(* Substitution on a free variable does nothing *)
+(** Substitution on a free variable does nothing *)
 Lemma substitute_freevar_eq:
   forall (t: lterm) (x: nat) (u: lterm), fr_below x t -> subst t x u = t.
 Proof.
@@ -32,14 +32,12 @@ Proof.
     rewrite (IHt2 x u); trivial.
 Save.
 
-(* Substitution on a closed term does nothing *)
+(** Substitution on a closed term does nothing *)
 Theorem substitute_closed_eq:
   forall (t: lterm) (x: nat) (u: lterm), closed t -> subst t x u = t.
 Proof.
   intros t x u H.
   apply (substitute_freevar_eq t x u).
-  apply (fr_below_incr t 0 x).
-  apply conj.
-    apply H.
-    apply le_0_n.
+  apply (fr_below_incr t 0 x); trivial.
+  auto with arith.
 Save.

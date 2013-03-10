@@ -23,7 +23,7 @@ Lemma correct_env_is_state:
 Proof.
   intros c0 e0 e H.
   unfold correct_state.
-  apply conj; trivial.
+  split; trivial.
   intro H0. inversion H0.
 Save.
 
@@ -134,7 +134,7 @@ Proof.
   induction e; simpl; trivial; intro H.
   inversion H. clear H0 H1 H2 c0 e0 e.
   inversion H3. destruct H0. rewrite H0; simpl.
-  apply conj.
+  split.
     apply substitute_list_closed.
       apply IHe1; trivial.
       rewrite length_tau_env; trivial.
@@ -382,7 +382,7 @@ Proof.
   apply Correct_env; simpl.
     unfold closed_code.
     rewrite compile_term_tau_ident.
-    exists t; apply conj; trivial.
+    exists t; split; trivial.
 
     apply Correct_env_nil.
     apply Correct_env_nil.
