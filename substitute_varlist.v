@@ -1,5 +1,7 @@
 Require Import Arith List lterm substitution.
 
+(** 1.4. *)
+
 (** Substitution of variable x in a list i->u0, i+1->u1, i+2->u2, ...
  * Return d by default
  *)

@@ -1,5 +1,7 @@
 Require Import Arith closed_lterm lterm.
 
+(** 1.3. Substitution with one term *)
+
 (** Substitute a variable, (Var n)[x <- u], d = Var n before recursion *)
 Fixpoint subst_var (n x: nat) (u d: lterm) : lterm :=
   match n, x with

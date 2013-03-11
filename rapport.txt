@@ -1,0 +1,49 @@
+Preuve d'un micro-compilateur pour le lambda-calcul non typé
+
+Sujet : http://www.enseignement.polytechnique.fr/informatique/INF565/projets/projet-coq.html
+
+Projet effectué par Nicolas Iooss
+
+J'ai effectué totalement les 5 parties du projet. Afin de gagner en lisibilité,
+j'ai divisé le code Coq en différents fichiers par thématique. Le Makefile
+permet de construire dans l'ordre tous les modules en prouvant ce que j'ai
+écrit. Voici la structure générale des fichiers Coq :
+
+lterm.v
+    Question 1.1, définition des lambda-termes.
+
+closed_lterm.v
+    Question 1.2, définition de la notion de terme clos.
+
+substitution.v
+    Question 1.3, substitution sur les termes.
+
+substitute_varlist.v
+    Question 1.4, substitution sur le lambda-terme (Var n) avec une liste de
+    substitutions à effectuer. Ce fichier contient beaucoup de lemmes utiles
+    pour la fin de la question.
+
+substitute_list.v
+    Question 1.4, substitution sur un lambda-terme quelconque avec une liste de
+    substitutions.
+
+beta_reduction.v
+    Partie 2, définition de la Beta-réduction.
+
+krivine.v
+    Partie 3, définition et sémantique de la machine abstraite de Krivine.
+
+compiler.v
+    Partie 4 et questions 5.1 et 5.2.
+    Définition de la notion de compilation de lambda-terme en code de machine
+    abstraite de Krivine, puis quelques lemmes utiles pour la suite.
+
+compiler_correct.v
+    Questions 5.3 à 5.5, preuve de la correction de la compilation.
+
+identity.v
+    Deux exemples d'utilisation des lambda-termes et de la machine de Krivine.
+    Ces exemple aident lors de certaines démonstrations, sans que ceux-ci ne
+    soient directement utilisés.
+
+
